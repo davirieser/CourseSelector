@@ -119,7 +119,7 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = [PUBLIC_DIR, "index.html"].iter().collect();
+    let path: PathBuf = ["static", "index.html"].iter().collect();
     Ok(NamedFile::open(path)?)
 }
 
