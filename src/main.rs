@@ -104,7 +104,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_faculties)
             .service(get_object)
             .service(get_course)
-            .service(Files::new("/public", PUBLIC_DIR).prefer_utf8(true));
+            .service(Files::new("/", PUBLIC_DIR).prefer_utf8(true));
         #[cfg(debug_assertions)]
         let app = app
             .service(debug_get_object)
@@ -119,7 +119,7 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = ["static", "index.html"].iter().collect();
+    let path: PathBuf = ["static", "dist", "index.html"].iter().collect();
     Ok(NamedFile::open(path)?)
 }
 
