@@ -1,3 +1,7 @@
-/target
-/static/node_modules
-/static/dist
+.DS_STORE
+node_modules
+dist
+.svelte-kit
+target
+
+

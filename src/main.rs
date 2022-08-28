@@ -3,8 +3,11 @@
 use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 
+use actix_cors::Cors;
 use actix_files::{Files, NamedFile};
-use actix_web::{get, web, App, Either, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    get, http::header, middleware::Logger, web, App, Either, HttpResponse, HttpServer, Responder,
+};
 use awc::{error::HttpError, http::Uri, Client};
 use lazy_static::lazy_static;
 use scraper::{Html, Selector};
@@ -100,11 +103,21 @@ struct CourseDate {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         let app = App::new()
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:8080")
+                    .allowed_methods(vec!["GET", "POST"])
+                    .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+                    .allowed_header(header::CONTENT_TYPE)
+                    .supports_credentials()
+                    .max_age(3600),
+            )
+            .wrap(Logger::default())
             .service(index)
             .service(get_faculties)
             .service(get_object)
             .service(get_course)
-            .service(Files::new("/public", PUBLIC_DIR).prefer_utf8(true));
+            .service(Files::new("/static", PUBLIC_DIR).prefer_utf8(true));
         #[cfg(debug_assertions)]
         let app = app
             .service(debug_get_object)
@@ -119,7 +132,7 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = ["static", "index.html"].iter().collect();
+    let path: PathBuf = ["static", "dist/index.html"].iter().collect();
     Ok(NamedFile::open(path)?)
 }
 
