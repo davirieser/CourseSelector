@@ -1,7 +1,56 @@
 <script lang="ts">
-    import { getLFU, getLFUID } from "./+page";
+    import FullCalendar, { type CalendarOptions } from 'svelte-fullcalendar';
+    import adaptivePlugin from '@fullcalendar/adaptive';
+    import interactionPlugin from '@fullcalendar/interaction';
+    import daygridPlugin from '@fullcalendar/daygrid';
+    import listPlugin from '@fullcalendar/list';
+    import timegridPlugin from '@fullcalendar/timegrid';
+    import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
+
+
+    let options: CalendarOptions = {
+      initialView: 'timeGridWeek',
+      plugins: [
+        adaptivePlugin, interactionPlugin, daygridPlugin,
+        listPlugin, timegridPlugin, resourceTimelinePlugin
+      ],
+      editable: false,
+      headerToolbar: {
+        left: 'today prev,next',
+        center: 'title',
+        right: 'resourceTimelineDay,timeGridWeek,dayGridMonth,listWeek,listYear'
+      },
+      buttonText: {
+        today: 'Jump to Today',
+        prev: 'Previous',
+        next: 'Next',
+        day: 'Day',
+        week: 'Week',
+        month: 'Month',
+        listWeek: 'List Week',
+        listYear: 'List Year'
+      },
+      slotEventOverlap: false,
+      allDaySlot: false,
+      slotDuration: { minutes: 15 },
+      slotLabelInterval: { hours: 1 },
+      slotMinTime: { hours: 8 },
+      scrollTime: { hours: 8 },
+      scrollTimeReset: false,
+      slotMaxTime: { hours: 20 },
+      schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
+      resourceAreaHeaderContent: 'Rooms',
+      resources: [],
+      events: []
+    };
+
+
+
+    import {getLFU, getLFUID } from "./+page";
     import Spinner from "$components/spinner.svelte";
     import Select from '$components/select.svelte';
+	  import Accordion from '$components/accordion.svelte';
+
 
     let selectedFaculty = "";
     let selectedFacultyID = 0;
@@ -15,8 +64,8 @@
     let selectedCourseCategoryID = 0;
     $: selectedCourseCategoryID = parseInt(selectedCourseCategory.split(" ")[0], 10);
 
-    let tableID = 0;
-
+    let selectedCourses: any[] = [];
+    let hideCourses = false;
 </script>
 
 
@@ -41,8 +90,6 @@
           </div>
         {:then data}
           <Select bind:bindto = {selectedCurriculum} data={data} text="Select Curriculum" />
-        {:catch error}
-          <p>{error}</p>
         {/await}
       {/if}
 
@@ -54,8 +101,6 @@
           </div>
         {:then data}
           <Select bind:bindto = {selectedCourseCategory} data={data} text="Select Curriculum" />
-        {:catch error}
-          <p>{error}</p>
         {/await}
       {/if}
 
@@ -63,38 +108,22 @@
     </div>  
 
     <br class="h-5"/>
-    <center>
     {#if selectedCourseCategory.length > 1}
-        {#await getLFUID(selectedCourseCategoryID)}
-          <div class="flex justify-center mx-auto">
-            <Spinner />
-          </div>
-        {:then data}
-          <div class="overflow-x-auto">
-            <table class="table w-1/2 text-sm">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {#each data.data as data}
-                  <tr class=hover>
-                    <th>{tableID++}</th>
-                    <td>{data.id}</td>
-                    <td>{data.name.slice(0, 80)}</td>
-                    <td></td>
-                  </tr>
-                {/each}
-              </tbody>
-            </table>
-          </div>
-        {:catch error}
-          <p>{error}</p>
-        {/await}
-      {/if}
-    </center>
+      <div class="divider"><button on:click={()=>hideCourses = !hideCourses} class="btn {hideCourses ? "btn-secondary" : "btn-primary"}">Hide Courses</button></div>
+      <div class="{hideCourses ? "hidden" : "block"}">
+          {#await getLFUID(selectedCourseCategoryID)}
+            <div class="flex justify-center mx-auto">
+              <Spinner />
+            </div>
+          {:then data}
+            {#each data.data as data}
+              <div class="p-2">
+                <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id} bind:selectedCourses={selectedCourses}/>
+              </div>
+            {/each}
+          {/await}
+      </div>
+    {/if}
+
+    <FullCalendar {options} class="max-h-96"/>
 </main> 
