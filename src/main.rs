@@ -3,6 +3,7 @@
 use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 
+
 use actix_files::{Files, NamedFile};
 use actix_web::{get, web, App, Either, HttpResponse, HttpServer, Responder};
 use awc::{error::HttpError, http::Uri, Client};
@@ -119,7 +120,7 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = ["static", "dist", "index.html"].iter().collect();
+    let path: PathBuf = ["static", "dist",  "index.html"].iter().collect();
     Ok(NamedFile::open(path)?)
 }
 

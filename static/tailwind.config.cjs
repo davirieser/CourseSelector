@@ -1,12 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-export default {
-  plugins: [],
-    theme: {
+module.exports = {
+  content: ["./src/**/*.{html,js,svelte,ts}"],
+  theme: {
     extend: {},
   },
-  purge: ["./index.html",'./src/**/*.{svelte,js,ts}'], // for unused CSS
-  variants: {
-    extend: {},
-  },
-  darkMode: false, // or 'media' or 'class'
-}
+  plugins: [require("daisyui")],
+};
