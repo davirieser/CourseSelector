@@ -10,6 +10,7 @@
 
     let options: CalendarOptions = {
       initialView: 'timeGridWeek',
+      height: "auto",
       plugins: [
         adaptivePlugin, interactionPlugin, daygridPlugin,
         listPlugin, timegridPlugin, resourceTimelinePlugin
@@ -125,5 +126,5 @@
       </div>
     {/if}
 
-    <FullCalendar {options} class="max-h-96"/>
-</main> 
+    <FullCalendar {options} />
+</main>
