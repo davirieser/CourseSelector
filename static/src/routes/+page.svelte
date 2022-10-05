@@ -111,7 +111,7 @@
           <Spinner />
         </div>
       {:then data}
-        <Select bind:bindto = {selectedFaculty} data={data} text="Select Faculty" />
+        <Select bind:bindto={selectedFaculty} data={data} text="Select Faculty" />
       {:catch error}
         <p>{error}</p>
       {/await}
@@ -134,7 +134,7 @@
             <Spinner />
           </div>
         {:then data}
-          <Select bind:bindto = {selectedCourseCategory} data={data} text="Select Curriculum" />
+          <Select bind:bindto = {selectedCourseCategory} data={data} text="Select course type" />
         {/await}
       {/if}
 

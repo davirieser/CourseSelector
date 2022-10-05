@@ -15,15 +15,14 @@
         <Spinner />
     </div>
 {:then data} 
-    <div class="w-auto">
-        <table class="table w-auto">
+    <div class="w-auto mx-auto justify-center flex">
+        <table class="table w-auto mx-auto">
             <thead>
                 <tr>
                     <th>Group</th>
                     <th>Date</th>
                     <th>Time</th>
                     <th>Location</th>
-                    <th>Add to calender</th>
 
                 </tr>
             </thead>
@@ -34,15 +33,12 @@
                         <td>{data.date}</td>
                         <td>{data.time}</td>
                         <td>{data.location}</td>
-                        <td>
-                            {#if data.newGroup}
-                                <input type="radio" name="course" value={data.start + "," + data.end + "," + data.title + "," + data.group} bind:group={localCourse}
-                                    class="bg-slate-800 rounded focus:ring-blue-800 hover:ring-blue-800"/>
-                            {/if}
-                        </td>
                     </tr>
                 {/each}
             </tbody>
         </table>
+        <div class="ml-2">
+            <button class="btn btn-primary">{selectedCourseName}</button>
+        </div>
     </div>
 {/await}
