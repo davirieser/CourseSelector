@@ -7,7 +7,7 @@
     import timegridPlugin from '@fullcalendar/timegrid';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 
-
+    let events: any[] = [];
     let options: CalendarOptions = {
       initialView: 'timeGridWeek',
       height: "auto",
@@ -42,7 +42,7 @@
       schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
       resourceAreaHeaderContent: 'Rooms',
       resources: [],
-      events: []
+      events
     };
 
 
@@ -65,8 +65,41 @@
     let selectedCourseCategoryID = 0;
     $: selectedCourseCategoryID = parseInt(selectedCourseCategory.split(" ")[0], 10);
 
-    let selectedCourses: any[] = [];
+    import { selectedCourses } from "$lib/stores/selectedCourses";
+
     let hideCourses = false;
+    let courses = $selectedCourses;
+    $: console.log(courses);
+    $: {
+      let localEvents = [];
+      if(courses.length > 0){
+        for(let course of courses){
+          console.log(course);
+          let start = course.split(",")[0];
+          let end = course.split(",")[1];
+          let title = course.split(",")[2];
+          let group = course.split(",")[3];
+          let event = {
+            start: new Date(JSON.parse(start)),
+            end: new Date(JSON.parse(end)),
+            title: title,
+            group: group
+          };
+          console.log(event);
+          localEvents.push(event);
+        }
+        console.log("LocalEvents ");
+        console.log(localEvents);
+        options = {
+          ...options, 
+          events: localEvents
+        }
+      }
+    }
+    $: {
+      console.log("Events "); 
+      console.log(events);
+    }
 </script>
 
 
@@ -119,12 +152,14 @@
           {:then data}
             {#each data.data as data}
               <div class="p-2">
-                <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id} bind:selectedCourses={selectedCourses}/>
+                <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id}/>
               </div>
             {/each}
           {/await}
       </div>
     {/if}
 
-    <FullCalendar {options} />
+    <div id="button">
+      <FullCalendar {options} />
+    </div>
 </main>

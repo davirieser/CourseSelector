@@ -1,12 +1,19 @@
 <script lang="ts">
-	import CourseTimes from '$components/courseTimes.svelte';
-    import Spinner from "$components/spinner.svelte";
-    import { getLFUID } from '$src/routes/+page';
-
+	import CourseTable from './courseTable.svelte';
+	import Select from '$components/select.svelte';
     let open = false;
     export let title = "";
     export let content = "";
     export let courseVarationID: number;
+
+
+    import { getLFUID } from "$src/routes/+page";
+    import Spinner from "$components/spinner.svelte";
+    let selectedCourseVaration = "";
+    let selectedCourseVarationID = 0;
+    let selectedCourseName = "";
+    $: selectedCourseVarationID= parseInt(selectedCourseVaration.split(" ")[0]);
+    $: selectedCourseName = selectedCourseVaration.replace(selectedCourseVarationID + " ", "");
 </script>
 
 <div class="relative w-auto overflow-hidden">
@@ -19,28 +26,29 @@
     <div class="bg-slate-800 transition-all duration-500 pl-5 pb-5 rounded-b-lg {open ? "block" : "hidden"}">
         <p>{content}</p>  
 
-        <!-- <p>{courseVarationID}</p> -->
+        <br class="mt-4"/>
         {#if courseVarationID != 0}
             {#await getLFUID(courseVarationID)}
                 <div class="flex justify-center mx-auto">
                     <Spinner />
                 </div>
             {:then data}
-                {#each data.data as course}
-                    <CourseTimes data={course} />
-                {/each}
+                <Select bind:bindto = {selectedCourseVaration} data={data} text="Select Course Variation" />
             {:catch error}
                 <p>{error}</p>
             {/await}
         {/if}
 
-        {#if courseVarationID == 0}
-            <h1 class="text-red-600">Course is not available in this semester</h1>
+        <br class="mt-4"/>
+        {#if selectedCourseVaration.length > 1}
+            <div class="flex justify-center mx-auto">
+                <CourseTable selectedCourseVarationID={selectedCourseVarationID}  selectedCourseName={selectedCourseName}/>
+            </div>
         {/if}
        
 
         <div class="flex justify-end p-1">
-            <a href="#button"><button class="btn btn-primary text-sm">Go to calender</button></a>
+            <button class="btn btn-primary text-sm">Go to calender</button>
         </div>
     </div>
 </div>
