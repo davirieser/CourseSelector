@@ -32,9 +32,9 @@ fn format_course_url(id: usize) -> String {
 }
 
 lazy_static! {
-    static ref ALL_SELECTOR: Selector = Selector::parse("*").unwrap();
     static ref XNODE_SELECTOR: Selector = Selector::parse(".xnode").unwrap();
     static ref TABLE_SELECTOR: Selector = Selector::parse("table").unwrap();
+    static ref TABLE_ELEM_SELECTOR: Selector = Selector::parse("thead, tbody").unwrap();
     static ref TR_SELECTOR: Selector = Selector::parse("tr").unwrap();
     static ref TH_SELECTOR: Selector = Selector::parse("th").unwrap();
     static ref TD_SELECTOR: Selector = Selector::parse("td").unwrap();
@@ -217,7 +217,7 @@ async fn get_course(path: web::Path<usize>) -> web::Json<Response<Course, &'stat
     if let Ok(document) = get_html_document(format_course_url(id)).await {
         // TODO: Parse all Tables
         if let Some(time_table) = document.select(&TABLE_SELECTOR).next() {
-            let mut sub_tables = time_table.select(&ALL_SELECTOR);
+            let mut sub_tables = time_table.select(&TABLE_ELEM_SELECTOR);
             let mut groups = Vec::new();
             while let (Some(head), Some(body)) = (sub_tables.next(), sub_tables.next()) {
                 if let Some(group) = parse_group(head, body) {
@@ -254,9 +254,7 @@ fn parse_group(head: ElementRef, body: ElementRef) -> Option<Group> {
         .select(&TR_SELECTOR)
         // Skip the Header Row
         .skip(2)
-        // TODO: Put into seperate Function
         .filter_map(|e| {
-            println!("Test: {}", e.text().collect::<String>());
             let mut e = e.select(&TD_SELECTOR);
             if let (Some(date), Some(duration), Some(location), Some(_), Some(comment)) =
                 (e.next(), e.next(), e.next(), e.next(), e.next())
