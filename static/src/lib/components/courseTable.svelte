@@ -2,12 +2,12 @@
 	import Spinner from '$components/spinner.svelte';
     import { getCourse } from "$src/routes/+page";
     import { selectedCourses } from "$lib/stores/selectedCourses";
+
     export let selectedCourseVarationID = 0;
     export let selectedCourseName = "";
-    $: console.log($selectedCourses);
 
-    let localCourse = "";
-    $: console.log(localCourse);
+    let tempGroupNumber = 0;
+    let once = false;
 </script>
 
 {#await getCourse(selectedCourseVarationID, selectedCourseName)}
@@ -23,22 +23,40 @@
                     <th>Date</th>
                     <th>Time</th>
                     <th>Location</th>
-
+                    <th>Comment</th>
+                    <th>Add to calendar</th>
                 </tr>
             </thead>
             <tbody>
-                {#each data.times as data, i}
+                {#each data.groups as data}
+                    {#each data.times as times}     
+                        <tr>
+                            <th>{data.number}</th>
+                            <td>{times.date}</td>
+                            <td>{times.time}</td>
+                            <td>{times.location}</td>
+                            <td>{times.comment}</td>
+                            {#if data.number !== tempGroupNumber && data.number !== 0}
+                                    <td><button class="btn btn-primary">Add Group {tempGroupNumber = data.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
+                                {:else if data.number === 0 && once === false}
+                                    <td><button class="btn btn-primary">Add Group {data.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
+                                    {once = true}
+                                {:else}
+                                    <td></td>
+                            {/if}
+                        </tr>
+                    {/each}
+                    
                     <tr>
-                        <th>{data.group}</th>
-                        <td>{data.date}</td>
-                        <td>{data.time}</td>
-                        <td>{data.location}</td>
+                        <th>---</th>
+                        <td>---</td>
+                        <td>---</td>
+                        <td>---</td>
+                        <td>---</td>
+                        <td>---</td>
                     </tr>
                 {/each}
             </tbody>
         </table>
-        <div class="ml-2">
-            <button class="btn btn-primary">{selectedCourseName}</button>
-        </div>
     </div>
 {/await}
