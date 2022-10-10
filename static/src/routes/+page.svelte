@@ -65,10 +65,10 @@
     let selectedCourseCategoryID = 0;
     $: selectedCourseCategoryID = parseInt(selectedCourseCategory.split(" ")[0], 10);
 
-    import { selectedCourses } from "$lib/stores/selectedCourses";
+    import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     let hideCourses = false;
-    let courses = $selectedCourses;
+    let courses = $selectedCoursesStore;
     $: console.log(courses);
     $: {
       let localEvents = [];
@@ -85,21 +85,21 @@
             title: title,
             group: group
           };
-          console.log(event);
+          // console.log(event);
           localEvents.push(event);
         }
-        console.log("LocalEvents ");
-        console.log(localEvents);
+        // console.log("LocalEvents ");
+        // console.log(localEvents);
         options = {
           ...options, 
           events: localEvents
         }
       }
     }
-    $: {
-      console.log("Events "); 
-      console.log(events);
-    }
+    // $: {
+    //   console.log("Events "); 
+    //   console.log(events);
+    // }
 </script>
 
 

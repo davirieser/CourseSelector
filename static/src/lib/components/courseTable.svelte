@@ -1,13 +1,30 @@
 <script lang="ts">
 	import Spinner from '$components/spinner.svelte';
     import { getCourse } from "$src/routes/+page";
-    import { selectedCourses } from "$lib/stores/selectedCourses";
+    import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     export let selectedCourseVarationID = 0;
     export let selectedCourseName = "";
 
     let tempGroupNumber = 0;
-    let once = false;
+    // let once = false;
+
+    function handleSelect(groupData: any){
+        console.log("Adding to storage array");
+        let selectedCourses = $selectedCoursesStore;
+        let alreadyInStore = false;
+        selectedCourses.forEach(group => {
+            if(group.number == groupData.number){
+                console.log("Group already exists");
+                alreadyInStore=true;
+                return;
+            }
+        });
+        if(alreadyInStore) throw new Error("Group already exists");
+        $selectedCoursesStore = [...$selectedCoursesStore, {
+			group: groupData,
+		}];
+    }
 </script>
 
 {#await getCourse(selectedCourseVarationID, selectedCourseName)}
@@ -28,25 +45,24 @@
                 </tr>
             </thead>
             <tbody>
-                {#each data.groups as data}
-                    {#each data.times as times}     
+                {#each data.groups as group}
+                    {#each group.times as times}     
                         <tr>
-                            <th>{data.number}</th>
+                            <th>{group.number}</th>
                             <td>{times.date}</td>
                             <td>{times.time}</td>
                             <td>{times.location}</td>
                             <td>{times.comment}</td>
-                            {#if data.number !== tempGroupNumber && data.number !== 0}
-                                    <td><button class="btn btn-primary">Add Group {tempGroupNumber = data.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
-                                {:else if data.number === 0 && once === false}
+                            {#if group.number !== tempGroupNumber && group.number !== 0}
+                                    <td><button on:click={handleSelect(group)} class="btn btn-primary">Add Group {tempGroupNumber = group.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
+                                {:else if group.number === 0}
                                     <td><button class="btn btn-primary">Add Group {data.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
-                                    {once = true}
+                                    <!-- {once = true} -->
                                 {:else}
                                     <td></td>
                             {/if}
                         </tr>
                     {/each}
-                    
                     <tr>
                         <th>---</th>
                         <td>---</td>
