@@ -5,13 +5,19 @@ use std::path::{Path, PathBuf};
 
 use actix_files::{Files, NamedFile};
 use actix_web::{get, web, App, Either, HttpResponse, HttpServer, Responder};
+
 use awc::{error::HttpError, http::Uri, Client};
+
 use lazy_static::lazy_static;
-use scraper::{Html, Selector};
+
+use scraper::{ElementRef, Html, Selector};
+
 use serde::{Serialize, Serializer};
 
 const PUBLIC_DIR: &str = "./static/dist";
 const LFU_FACULTY_URL: &str = "https://lfuonline.uibk.ac.at/public/lfuonline_lv.home#lv-details";
+
+const LFU_ENGLISH_HEADER: &str = "history.lv.lfuonline.uibk.ac.at=; ict-lb-oracle=orab1; lfuonline_live=4c820306cc002f5045add3667aa0f889; prefer-language=en";
 
 fn format_lfu_object_url(id: usize) -> String {
     format!(
@@ -30,7 +36,9 @@ fn format_course_url(id: usize) -> String {
 lazy_static! {
     static ref XNODE_SELECTOR: Selector = Selector::parse(".xnode").unwrap();
     static ref TABLE_SELECTOR: Selector = Selector::parse("table").unwrap();
+    static ref TABLE_ELEM_SELECTOR: Selector = Selector::parse("thead, tbody").unwrap();
     static ref TR_SELECTOR: Selector = Selector::parse("tr").unwrap();
+    static ref TH_SELECTOR: Selector = Selector::parse("th").unwrap();
     static ref TD_SELECTOR: Selector = Selector::parse("td").unwrap();
     static ref A_SELECTOR: Selector = Selector::parse("a").unwrap();
     static ref LV_ROW_SELECTOR: Selector = Selector::parse(".lv-row").unwrap();
@@ -84,16 +92,36 @@ struct LfuObject {
 #[derive(Serialize)]
 struct Course {
     id: usize,
-    times: Vec<CourseDate>,
+    groups: Vec<Group>,
 }
 
 #[derive(Serialize)]
-struct CourseDate {
-    // TODO: Add Group
+struct Group {
+    number: usize,
+    times: Vec<LectureDate>,
+}
+
+#[derive(Serialize)]
+struct LectureDate {
     date: String,
     time: String,
     location: String,
     comment: String,
+}
+
+#[derive(Serialize)]
+struct CourseDetail {
+    id: usize,
+    lv_number: usize,
+    name: String,
+    lecturers: String,
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type", content = "data")]
+enum Objects {
+    Object(Vec<LfuObject>),
+    CourseDetails(Vec<CourseDetail>),
 }
 
 #[actix_web::main]
@@ -104,7 +132,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_faculties)
             .service(get_object)
             .service(get_course)
-            .service(Files::new("/public", PUBLIC_DIR).prefer_utf8(true));
+            .service(Files::new("/", PUBLIC_DIR).prefer_utf8(true));
         #[cfg(debug_assertions)]
         let app = app
             .service(debug_get_object)
@@ -119,7 +147,7 @@ async fn main() -> std::io::Result<()> {
 
 #[get("/")]
 async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = ["static", "index.html"].iter().collect();
+    let path: PathBuf = ["static", "dist", "index.html"].iter().collect();
     Ok(NamedFile::open(path)?)
 }
 
@@ -189,69 +217,63 @@ async fn debug_get_course(path: web::Path<usize>) -> actix_web::Result<String> {
 async fn get_course(path: web::Path<usize>) -> web::Json<Response<Course, &'static str>> {
     let id = path.into_inner();
     if let Ok(document) = get_html_document(format_course_url(id)).await {
-        // TODO: Parse all Tables
         if let Some(time_table) = document.select(&TABLE_SELECTOR).next() {
-            let mut rows = time_table.select(&TR_SELECTOR);
-            // Skip the Header Row
-            let rows = rows.skip(2);
-            return web::Json(Response::success(Course {
-                id,
-                times: rows
-                    // TODO: Put into seperate Function
-                    .map(|e| {
-                        let mut e = e.select(&TD_SELECTOR);
-                        if let (
-                            Some(date),
-                            Some(duration),
-                            Some(location),
-                            Some(_),
-                            Some(comment),
-                        ) = (e.next(), e.next(), e.next(), e.next(), e.next())
-                        {
-                            CourseDate {
-                                date: date
-                                    .text()
-                                    .map(|e| e.split(' ').nth(1).unwrap_or("").trim())
-                                    .collect(),
-                                time: duration.text().map(|e| e.trim()).collect(),
-                                location: location
-                                    .select(&A_SELECTOR)
-                                    .next()
-                                    .unwrap()
-                                    .text()
-                                    .map(|e| e.trim())
-                                    .collect(),
-                                comment: comment.text().map(|e| e.trim()).collect(),
-                            }
-                        } else {
-                            CourseDate {
-                                date: String::new(),
-                                time: String::new(),
-                                location: String::new(),
-                                comment: String::new(),
-                            }
-                        }
-                    })
-                    .collect(),
-            }));
+            let mut sub_tables = time_table.select(&TABLE_ELEM_SELECTOR);
+            let mut groups = Vec::new();
+            while let (Some(head), Some(body)) = (sub_tables.next(), sub_tables.next()) {
+                if let Some(group) = parse_group(head, body) {
+                    groups.push(group);
+                }
+            }
+            return web::Json(Response::success(Course { id, groups }));
         }
     }
     web::Json(Response::error("Could not get Course"))
 }
 
-#[derive(Serialize)]
-struct CourseDetail {
-    id: usize,
-    lv_number: usize,
-    name: String,
-    lecturers: String,
-}
-
-#[derive(Serialize)]
-#[serde(tag = "type", content = "data")]
-enum Objects {
-    Object(Vec<LfuObject>),
-    CourseDetails(Vec<CourseDetail>),
+fn parse_group(head: ElementRef, body: ElementRef) -> Option<Group> {
+    let group_header = head
+        .select(&TR_SELECTOR)
+        .next()?
+        .select(&TH_SELECTOR)
+        .next()?
+        .text()
+        .collect::<String>();
+    let number = group_header
+        .split(' ')
+        .nth(1)?
+        .trim()
+        .parse::<usize>()
+        .ok()?;
+    let times = body
+        .select(&TR_SELECTOR)
+        // Skip the Header Row
+        .skip(2)
+        .filter_map(|e| {
+            let mut e = e.select(&TD_SELECTOR);
+            if let (Some(date), Some(duration), Some(location), Some(_), Some(comment)) =
+                (e.next(), e.next(), e.next(), e.next(), e.next())
+            {
+                Some(LectureDate {
+                    date: date
+                        .text()
+                        .map(|e| e.split(' ').nth(1).unwrap_or("").trim())
+                        .collect(),
+                    time: duration.text().map(|e| e.trim()).collect(),
+                    location: location
+                        .select(&A_SELECTOR)
+                        .next()?
+                        .text()
+                        .map(|e| e.trim())
+                        .collect(),
+                    comment: comment.text().map(|e| e.trim()).collect(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+    Some(Group { number, times })
 }
 
 fn get_html_objects(document: Html, id: usize) -> Option<Objects> {
@@ -325,7 +347,12 @@ where
     Uri: TryFrom<U>,
     <Uri as TryFrom<U>>::Error: Into<HttpError>,
 {
-    if let Ok(mut response) = Client::default().get(url).send().await {
+    if let Ok(mut response) = Client::default()
+        .get(url)
+        .insert_header(("Cookie", LFU_ENGLISH_HEADER))
+        .send()
+        .await
+    {
         if let Ok(mut body) = response.body().limit(usize::MAX).await {
             return Ok(String::from_utf8_lossy(body.as_ref()).into_owned());
         }

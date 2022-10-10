@@ -15,11 +15,11 @@ fn main() {
         .current_dir(std::fs::canonicalize("./static").unwrap())
         .spawn()
     {
-        Ok(_) => {
-            debug_print!("Rebuild Typescript");
+        Ok(o) => {
+            debug_print!("Rebuild Typescript: {:?}", o);
         }
-        Err(_) => {
-            debug_print!("Error rebuilding Typescript");
+        Err(e) => {
+            debug_print!("Error rebuilding Typescript: {:?}", e);
         }
     }
 }
