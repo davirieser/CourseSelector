@@ -6,7 +6,6 @@
     export let selectedCourseVarationID = 0;
     export let selectedCourseName = "";
 
-    let tempGroupNumber = 0;
     // let once = false;
 
     function handleSelect(groupData: any){
@@ -46,18 +45,15 @@
             </thead>
             <tbody>
                 {#each data.groups as group}
-                    {#each group.times as times}     
+                    {#each group.times as times, i}     
                         <tr>
                             <th>{group.number}</th>
                             <td>{times.date}</td>
                             <td>{times.time}</td>
                             <td>{times.location}</td>
                             <td>{times.comment}</td>
-                            {#if group.number !== tempGroupNumber && group.number !== 0}
-                                    <td><button on:click={handleSelect(group)} class="btn btn-primary">Add Group {tempGroupNumber = group.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
-                                {:else if group.number === 0}
-                                    <td><button class="btn btn-primary">Add Group {data.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
-                                    <!-- {once = true} -->
+                            {#if i == 0}
+                                    <td><button on:click={handleSelect(group)} class="btn btn-primary">Add Group {group.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
                                 {:else}
                                     <td></td>
                             {/if}

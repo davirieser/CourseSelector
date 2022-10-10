@@ -68,8 +68,8 @@
     import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     let hideCourses = false;
-    let courses = $selectedCoursesStore;
-    $: console.log(courses);
+    let courses = $selectedCoursesStore
+    $: console.log($selectedCoursesStore);
     $: {
       let localEvents = [];
       if(courses.length > 0){
