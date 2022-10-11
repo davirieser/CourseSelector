@@ -11,7 +11,6 @@
       items.push({value: element.id, label: label});
     });
     
-    $: .log(items);
     function handleSelect(event: any){
       bindto = event.detail.label;
     }
