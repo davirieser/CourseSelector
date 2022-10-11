@@ -1,4 +1,6 @@
 <script lang="ts">
+
+	  import CourseTimes from '$components/courseTimes.svelte';
     import FullCalendar, { type CalendarOptions } from 'svelte-fullcalendar';
     import adaptivePlugin from '@fullcalendar/adaptive';
     import interactionPlugin from '@fullcalendar/interaction';
@@ -6,6 +8,7 @@
     import listPlugin from '@fullcalendar/list';
     import timegridPlugin from '@fullcalendar/timegrid';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
+
 
     let events: any[] = [];
     let options: CalendarOptions = {
@@ -100,6 +103,10 @@
     //   console.log("Events "); 
     //   console.log(events);
     // }
+
+    function clearCalendar(){
+      $selectedCoursesStore = [];
+    }
 </script>
 
 
@@ -150,14 +157,28 @@
               <Spinner />
             </div>
           {:then data}
-            {#each data.data as data}
-              <div class="p-2">
-                <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id}/>
-              </div>
-            {/each}
+            {#if data.type === "CourseDetails"}
+              {#each data.data as course}
+                <div class="p-2">
+                  <CourseTimes data={course}/>
+                </div>
+              {/each}
+            {:else}
+              {#each data.data as data}
+                <div class="p-2">
+                  <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id}/>
+                </div>
+              {/each}
+            {/if}
           {/await}
       </div>
     {/if}
+    {#if $selectedCoursesStore.length > 0}
+      <div class="divider"><button on:click={clearCalendar} class="btn btn-primary">Clear Calendar</button></div>
+    {/if}
+
+
+
 
     <div id="button">
       <FullCalendar {options} />

@@ -1,29 +1,32 @@
 <script lang="ts">
+	import { Calendar } from '@fullcalendar/core';
 	import Spinner from '$components/spinner.svelte';
     import { getCourse } from "$src/routes/+page";
     import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     export let selectedCourseVarationID = 0;
     export let selectedCourseName = "";
+    let groupSelected = false; 
 
-    // let once = false;
 
-    function handleSelect(groupData: any){
-        console.log("Adding to storage array");
-        let selectedCourses = $selectedCoursesStore;
-        let alreadyInStore = false;
-        selectedCourses.forEach(group => {
-            if(group.number == groupData.number){
-                console.log("Group already exists");
-                alreadyInStore=true;
-                return;
+    function handleSelect(groupData: any, courseID: any){
+        if(groupSelected){
+            $selectedCoursesStore = $selectedCoursesStore.filter(function(value, index, arr){
+            if(value.courseID !== courseID){
+                return value;
             }
-        });
-        if(alreadyInStore) throw new Error("Group already exists");
-        $selectedCoursesStore = [...$selectedCoursesStore, {
+            })
+
+            groupSelected = false;
+        }else{
+            groupSelected = true;
+            $selectedCoursesStore = [...$selectedCoursesStore, {
 			group: groupData,
-		}];
+            courseID: courseID
+		    }];
+        }
     }
+
 </script>
 
 {#await getCourse(selectedCourseVarationID, selectedCourseName)}
@@ -49,12 +52,16 @@
                         <tr>
                             <th>{group.number}</th>
                             <td>{times.date}</td>
-                            <td>{times.time}</td>
+                            <td>{times.time}</td>   
                             <td>{times.location}</td>
                             <td>{times.comment}</td>
                             {#if i == 0}
-                                    <td><button on:click={handleSelect(group)} class="btn btn-primary">Add Group {group.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
-                                {:else}
+                                {#if !groupSelected}
+                                    <td><button on:click={handleSelect(group, data.id)} class="btn btn-primary">Add Group {group.number} {selectedCourseName.slice(0,2)} to calendar</button></td>
+                                {:else if groupSelected}
+                                    <td><button on:click={handleSelect(group, data.id)} class="btn btn-secondary">Remove from Calendar</button></td>
+                                {/if}
+                                    {:else}
                                     <td></td>
                             {/if}
                         </tr>

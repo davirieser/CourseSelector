@@ -2,7 +2,6 @@
 	import CourseTable from '$components/courseTable.svelte';
     let open = false;
     export let data:any;
-    $: console.log(data);
 </script>
 
 <div class="relative w-auto overflow-hidden">

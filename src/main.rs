@@ -4,6 +4,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::path::{Path, PathBuf};
 
 use actix_files::{Files, NamedFile};
+use actix_web::http::header;
 use actix_web::{get, web, App, Either, HttpResponse, HttpServer, Responder};
 
 use awc::{error::HttpError, http::Uri, Client};
@@ -17,7 +18,7 @@ use serde::{Serialize, Serializer};
 const PUBLIC_DIR: &str = "./static/dist";
 const LFU_FACULTY_URL: &str = "https://lfuonline.uibk.ac.at/public/lfuonline_lv.home#lv-details";
 
-const LFU_ENGLISH_HEADER: &str = "history.lv.lfuonline.uibk.ac.at=; ict-lb-oracle=orab1; lfuonline_live=4c820306cc002f5045add3667aa0f889; prefer-language=en";
+const LFU_ENGLISH_HEADER: &str = "history.spa.lfuonline.uibk.ac.at=; history.lv.lfuonline.uibk.ac.at=; ict-lb-oracle=orab2; prefer-language=en";
 
 fn format_lfu_object_url(id: usize) -> String {
     format!(
@@ -127,7 +128,14 @@ enum Objects {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
+        let cors = actix_cors::Cors::default()
+            .allowed_methods(vec![
+                actix_web::http::Method::GET,
+                actix_web::http::Method::POST,
+            ])
+            .allow_any_origin();
         let app = App::new()
+            .wrap(cors)
             .service(index)
             .service(get_faculties)
             .service(get_object)
@@ -140,7 +148,7 @@ async fn main() -> std::io::Result<()> {
             .service(debug_get_faculties);
         app
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("0.0.0.0", 8080))?
     .run()
     .await
 }
@@ -225,15 +233,6 @@ async fn get_course(path: web::Path<usize>) -> web::Json<Response<Course, &'stat
                     groups.push(group);
                 }
             }
-<<<<<<< HEAD
-            /*
-            Course {
-                id,
-                groups: ,
-            };
-            */
-=======
->>>>>>> df05f64bdb6b5f528ee66ba30815427adb8f248e
             return web::Json(Response::success(Course { id, groups }));
         }
     }
