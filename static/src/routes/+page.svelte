@@ -1,7 +1,15 @@
 <script lang="ts">
-
+    import {getLFU, getLFUID } from "./+page";
+    import Spinner from "$components/spinner.svelte";
+    import Select from '$components/select.svelte';
+	  import Accordion from '$components/accordion.svelte';
 	  import CourseTimes from '$components/courseTimes.svelte';
-    import FullCalendar, { type CalendarOptions } from 'svelte-fullcalendar';
+
+
+
+    import { onMount } from 'svelte';
+	  import { Calendar} from '@fullcalendar/core';
+    import { CalendarApi, CalendarRoot } from "@fullcalendar/common";
     import adaptivePlugin from '@fullcalendar/adaptive';
     import interactionPlugin from '@fullcalendar/interaction';
     import daygridPlugin from '@fullcalendar/daygrid';
@@ -9,11 +17,12 @@
     import timegridPlugin from '@fullcalendar/timegrid';
     import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 
-
-    let events: any[] = [];
-    let options: CalendarOptions = {
+    let options = {
+      themeSystem: 'bootstrap5',
       initialView: 'timeGridWeek',
       height: "auto",
+      width: "auto",
+      contentHeight: "auto",
       plugins: [
         adaptivePlugin, interactionPlugin, daygridPlugin,
         listPlugin, timegridPlugin, resourceTimelinePlugin
@@ -45,15 +54,50 @@
       schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
       resourceAreaHeaderContent: 'Rooms',
       resources: [],
-      events
     };
 
+    let classes: string; 
+    let style: string;
+    let calendarEl: any;
+    let calendar: Calendar;
+    let calendarAPI: CalendarApi = new CalendarApi();
+    onMount(async () => {
+      await import("@fullcalendar/core/vdom.js");
+      if(!canBeInitiated) return;
+      initCalendar();
+      return() => {
+        calendar && calendar.destroy();
+      };
+    })
+   
+    $: canBeInitiated =
+      options &&
+      options.plugins &&
+      options.plugins.length &&
+      calendarEl &&
+      !calendar;
+    let calendarInitiated = false;
 
+    $: {
+      if (calendar && options && options.plugins && options.plugins.length)
+        updateCalendarOptions();
 
-    import {getLFU, getLFUID } from "./+page";
-    import Spinner from "$components/spinner.svelte";
-    import Select from '$components/select.svelte';
-	  import Accordion from '$components/accordion.svelte';
+      if (canBeInitiated) {
+        initCalendar();
+        calendarInitiated = true;
+      }
+    }
+    function initCalendar() {
+      calendar = new Calendar(calendarEl, options);
+      calendar.render();
+	  }
+    function updateCalendarOptions() {
+      calendar.pauseRendering();
+      calendar.resetOptions(options);
+      calendar.resumeRendering();
+    }
+    
+
 
 
     let selectedFaculty = "";
@@ -71,41 +115,26 @@
     import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     let hideCourses = false;
-    let courses = $selectedCoursesStore
-    $: console.log($selectedCoursesStore);
+    let eventCount = 0;
+    $: console.log($selectedCoursesStore)
     $: {
-      let localEvents = [];
-      if(courses.length > 0){
-        for(let course of courses){
+      if(calendarInitiated){
+        calendar.removeAllEvents();
+        for (let course of $selectedCoursesStore) {
           console.log(course);
-          let start = course.split(",")[0];
-          let end = course.split(",")[1];
-          let title = course.split(",")[2];
-          let group = course.split(",")[3];
-          let event = {
-            start: new Date(JSON.parse(start)),
-            end: new Date(JSON.parse(end)),
-            title: title,
-            group: group
-          };
-          // console.log(event);
-          localEvents.push(event);
-        }
-        // console.log("LocalEvents ");
-        // console.log(localEvents);
-        options = {
-          ...options, 
-          events: localEvents
-        }
+          for (let event of course.events){
+            calendar.addEvent(event);
+            eventCount++;
+          }
+        } 
+
+      
       }
     }
-    // $: {
-    //   console.log("Events "); 
-    //   console.log(events);
-    // }
-
+    
     function clearCalendar(){
       $selectedCoursesStore = [];
+      calendar.removeAllEvents();
     }
 </script>
 
@@ -174,13 +203,22 @@
       </div>
     {/if}
     {#if $selectedCoursesStore.length > 0}
-      <div class="divider"><button on:click={clearCalendar} class="btn btn-primary">Clear Calendar</button></div>
+      <div class="divider"><button on:click={()=>clearCalendar()} class="btn btn-primary">Clear Calendar</button></div>
     {/if}
 
 
 
 
-    <div id="button">
-      <FullCalendar {options} />
+    <div id="button" class="mx-auto">
+      <div bind:this={calendarEl} class={classes} {style} />
     </div>
 </main>
+
+
+<style>
+  :global([role="columnheader"], [role="rowheader"], [role="gridcell"], [role="row"], [role="grid"]) {
+    background-color: #111729 !important;
+    color: white;
+  }
+
+</style>
