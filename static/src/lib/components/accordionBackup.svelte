@@ -7,7 +7,7 @@
     export let courseVarationID: number;
 
 
-    import { getLFUID } from "$src/routes/+page";
+    import { getLFUID } from "$lib/helper/fetchAPI";
     import Spinner from "$components/spinner.svelte";
     let selectedCourseVaration = "";
     let selectedCourseVarationID = 0;

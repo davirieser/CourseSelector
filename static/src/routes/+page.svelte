@@ -1,5 +1,6 @@
 <script lang="ts">
-    import {getLFU, getLFUID } from "./+page";
+    // #TODO Redo design add to website.
+    import {getLFU, getLFUID } from "$lib/helper/fetchAPI";
     import Spinner from "$components/spinner.svelte";
     import Select from '$components/select.svelte';
 	  import Accordion from '$components/accordion.svelte';
@@ -20,7 +21,7 @@
     let options = {
       themeSystem: 'bootstrap5',
       initialView: 'timeGridWeek',
-      height: "auto",
+      height: 300,
       width: "auto",
       contentHeight: "auto",
       plugins: [
@@ -116,7 +117,6 @@
 
     let hideCourses = false;
     let eventCount = 0;
-    $: console.log($selectedCoursesStore)
     $: {
       if(calendarInitiated){
         calendar.removeAllEvents();
@@ -127,8 +127,6 @@
             eventCount++;
           }
         } 
-
-      
       }
     }
     
@@ -178,40 +176,42 @@
     </div>  
 
     <br class="h-5"/>
-    {#if selectedCourseCategory.length > 1}
-      <div class="divider"><button on:click={()=>hideCourses = !hideCourses} class="btn {hideCourses ? "btn-secondary" : "btn-primary"}">Hide Courses</button></div>
-      <div class="{hideCourses ? "hidden" : "block"}">
-          {#await getLFUID(selectedCourseCategoryID)}
-            <div class="flex justify-center mx-auto">
-              <Spinner />
-            </div>
-          {:then data}
-            {#if data.type === "CourseDetails"}
-              {#each data.data as course}
-                <div class="p-2">
-                  <CourseTimes data={course}/>
-                </div>
-              {/each}
-            {:else}
-              {#each data.data as data}
-                <div class="p-2">
-                  <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id}/>
-                </div>
-              {/each}
-            {/if}
-          {/await}
+    <!-- <div class="flex"> -->
+      {#if selectedCourseCategory.length > 1}
+        <div class="divider"><button on:click={()=>hideCourses = !hideCourses} class="btn {hideCourses ? "btn-secondary" : "btn-primary"}">Hide Courses</button></div>
+        <div class="{hideCourses ? "hidden" : "block"}">
+            {#await getLFUID(selectedCourseCategoryID)}
+              <div class="flex justify-center mx-auto">
+                <Spinner />
+              </div>
+            {:then data}
+              {#if data.type === "CourseDetails"}
+                {#each data.data as course}
+                  <div class="p-2">
+                    <CourseTimes data={course}/>
+                  </div>
+                {/each}
+              {:else}
+                {#each data.data as data}
+                  <div class="p-2">
+                    <Accordion title={data.name.slice(0, 80)} content={data.name} courseVarationID={data.id}/>
+                  </div>
+                {/each}
+              {/if}
+            {/await}
+        </div>
+      {/if}
+      {#if $selectedCoursesStore.length > 0}
+        <div class="divider"><button on:click={()=>clearCalendar()} class="btn btn-primary">Clear Calendar</button></div>
+      {/if}
+
+
+
+
+      <div id="button" class="mx-auto h-1/3">
+        <div bind:this={calendarEl} class={classes} {style} />
       </div>
-    {/if}
-    {#if $selectedCoursesStore.length > 0}
-      <div class="divider"><button on:click={()=>clearCalendar()} class="btn btn-primary">Clear Calendar</button></div>
-    {/if}
-
-
-
-
-    <div id="button" class="mx-auto">
-      <div bind:this={calendarEl} class={classes} {style} />
-    </div>
+    <!-- </div> -->
 </main>
 
 

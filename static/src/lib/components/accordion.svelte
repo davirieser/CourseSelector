@@ -1,7 +1,7 @@
 <script lang="ts">
 	import CourseTimes from '$components/courseTimes.svelte';
     import Spinner from "$components/spinner.svelte";
-    import { getLFUID } from '$src/routes/+page';
+    import { getLFUID } from '$lib/helper/fetchAPI';
 
     let open = false;
     export let title = "";

@@ -136,11 +136,11 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin();
         let app = App::new()
             .wrap(cors)
-            .service(index)
+            // .service(index)
             .service(get_faculties)
             .service(get_object)
-            .service(get_course)
-            .service(Files::new("/", PUBLIC_DIR).prefer_utf8(true));
+            .service(get_course);
+        // .service(Files::new("/", PUBLIC_DIR).prefer_utf8(true));
         #[cfg(debug_assertions)]
         let app = app
             .service(debug_get_object)
@@ -148,16 +148,17 @@ async fn main() -> std::io::Result<()> {
             .service(debug_get_faculties);
         app
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(("0.0.0.0", 3001))?
     .run()
     .await
 }
 
-#[get("/")]
-async fn index() -> actix_web::Result<NamedFile> {
-    let path: PathBuf = ["static", "dist", "index.html"].iter().collect();
-    Ok(NamedFile::open(path)?)
-}
+// #[cfg(debug_assertions)]
+// #[get("/")]
+// async fn index() -> actix_web::Result<NamedFile> {
+//     let path: PathBuf = ["static", "dist", "index.html"].iter().collect();
+//     Ok(NamedFile::open(path)?)
+// }
 
 #[cfg(debug_assertions)]
 #[get("/debug/lfu")]

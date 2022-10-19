@@ -1,13 +1,11 @@
 <script lang="ts">
-	import { Calendar } from '@fullcalendar/core';
 	import Spinner from '$components/spinner.svelte';
-    import { getCourse } from "$src/routes/+page";
+    import { getCourse } from "$lib/helper/fetchAPI";
     import { selectedCoursesStore } from "$lib/stores/selectedCourses";
 
     export let selectedCourseVarationID = 0;
     export let selectedCourseName = "";
     let groupSelected = false; 
-
 
     function handleSelect(groupData: any, courseID: any){
         
@@ -20,6 +18,14 @@
 
             groupSelected = false;
         }else{
+            $selectedCoursesStore.forEach(function(value, index, arr){
+                if(value.courseID === courseID){
+                    groupSelected = true;
+                    alert("Group already selected");
+                    throw new Error("Group already selected");
+                }
+            
+            })
             let events: any = [];
             for(let times of groupData.times){
                 let timeSplit= times.time.split('-');
@@ -36,13 +42,14 @@
                 let event = {
                     start: start, 
                     end: end, 
-                    title: selectedCourseName,
+                    title: selectedCourseName + " - Group " + groupData.number + " - " + times.comment,
                     group: groupData.number,
                 };
                 events = [...events, event];
 
             }
-
+            
+            
             groupSelected = true;
             $selectedCoursesStore = [...$selectedCoursesStore, {
                 events: events,
